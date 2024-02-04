@@ -1,0 +1,62 @@
+version: "3.8"
+
+volumes:
+  cluster_log: {}
+  cluster_data:
+
+networks:
+  manager_network:
+
+services:
+  grafana:
+    image: grafana/grafana-enterprise
+    ports:
+     - '6285:3000'
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+    volumes:
+      - type: volume
+        source: cluster_log
+        target: /var/lib/grafana
+    networks:
+      - manager_network   
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--log.level=error'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - '9090:9090'
+    volumes:
+      - type: volume
+        source: cluster_data
+        target: /prometheus
+    networks:
+      - manager_network
+      
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    networks:
+      - manager_network
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+     

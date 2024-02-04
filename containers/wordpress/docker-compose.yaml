@@ -7,6 +7,8 @@ networks:
 volumes:
   cgkalvi_data:
   cgkalvi_db:
+
+##add secrets for db_name , db_user, db_password and mysqlroot password
   
 services:
   mysql:
@@ -21,7 +23,7 @@ services:
     volumes:
       - cgkalvi_db:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: /run/secrets/mysql_rt
+      MYSQL_ROOT_PASSWORD: /run/secrets/mysql_root
       MYSQL_DATABASE_FILE: /run/secrets/db_name
       MYSQL_USER_FILE: /run/secrets/db_user
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
@@ -31,7 +33,7 @@ services:
       - db_name
       - db_user
       - db_password
-      - mysql_rt
+      - mysql_root
 
   cgkalvi_site:
     image: wordpress:latest
@@ -61,7 +63,7 @@ services:
 secrets:
   db_name:
     external: true
-  mysql_rt:
+  mysql_root:
     external: true
   db_user:
     external: true
