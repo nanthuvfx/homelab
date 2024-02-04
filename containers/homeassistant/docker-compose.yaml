@@ -1,0 +1,17 @@
+version: '3.8'
+
+volumes:
+  assistant_data:
+
+services:
+  assistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Kolkata  
+    volumes:
+      - assistant_data:/config
+    ports:
+      - '7892:8123'
+
+
