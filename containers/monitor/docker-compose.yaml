@@ -3,6 +3,7 @@ version: "3.8"
 volumes:
   cluster_log: {}
   cluster_data:
+  config_secure:
 
 networks:
   manager_network:
@@ -12,17 +13,8 @@ services:
     image: grafana/grafana-enterprise
     ports:
      - '6285:3000'
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
     volumes:
-      - type: volume
-        source: cluster_log
-        target: /var/lib/grafana
+      - cluster_log:/var/lib/grafana
     networks:
       - manager_network   
 
@@ -30,33 +22,38 @@ services:
     image: prom/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--log.level=error'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=7d'
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      placement:
-        constraints:
-          - node.role == manager
     ports:
       - '9090:9090'
     volumes:
-      - type: volume
-        source: cluster_data
-        target: /prometheus
+      - cluster_data:/prometheus
+      - config_secure:/etc/prometheus:ro
     networks:
       - manager_network
-      
+
   node_exporter:
     image: quay.io/prometheus/node-exporter:latest
     container_name: node_exporter
+    deploy:
+      mode: global
     command:
       - '--path.rootfs=/host'
-    networks:
-      - manager_network
+    pid: host
     restart: unless-stopped
     volumes:
       - '/:/host:ro,rslave'
-     
+    networks:
+      - manager_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor-arm64:v0.47.2
+    container_name: cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - '9240:8080'
+    networks:
+      - manager_network
+      

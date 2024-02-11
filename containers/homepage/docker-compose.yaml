@@ -1,0 +1,61 @@
+version: '3.8'
+
+networks:
+  cgkalvi:
+  database:
+  
+volumes:
+  cgkalvi_data:
+  cgkalvi_db:
+  
+services:
+  mysql:
+    image: mysql:latest
+    container_name: mysql
+    ports:
+      - "2749:3306"
+    volumes:
+      - cgkalvi_db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: /run/secrets/mysql_rt
+      MYSQL_DATABASE_FILE: /run/secrets/db_name
+      MYSQL_USER_FILE: /run/secrets/db_user
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+    networks:
+      - cgkalvi
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+      - mysql_rt
+
+  cgkalvi_site:
+    image: wordpress:latest
+    container_name: cgkalvi_site
+    ports:
+      - "6491:80"
+    volumes:
+      - cgkalvi_data:/var/www/html/wp-content
+    environment:
+      WORDPRESS_DB_HOST: 'mysql'
+      WORDPRESS_DB_USER_FILE: /run/secrets/db_user
+      WORDPRESS_DB_PASSWORD_FILE: /run/secrets/db_password
+      WORDPRESS_DB_NAME_FILE: /run/secrets/db_name
+    networks :
+      - cgkalvi
+    depends_on:
+      - mysql
+    secrets:
+      - db_name
+      - db_user
+      - db_password
+
+secrets:
+  db_name:
+    external: true
+  mysql_rt:
+    external: true
+  db_user:
+    external: true
+  db_password:
+    external: true
