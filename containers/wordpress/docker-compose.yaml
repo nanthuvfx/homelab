@@ -13,10 +13,6 @@ volumes:
 services:
   mysql:
     image: mysql:latest
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == supervisor
     container_name: mysql
     ports:
       - "2749:3306"
@@ -37,10 +33,6 @@ services:
 
   cgkalvi_site:
     image: wordpress:latest
-    deploy:
-      placement:
-        constraints:
-          - node.hostname == worker01
     container_name: cgkalvi_site
     ports:
       - "6491:80"
